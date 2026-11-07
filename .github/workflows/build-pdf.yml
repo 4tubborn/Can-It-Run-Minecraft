@@ -3,10 +3,21 @@ name: Build Minecraft PDF
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-pdf.yml"
+      - "Makefile"
+      - "src/**"
+      - "platforms/**"
+      - "tools/make_pdf.py"
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -18,8 +29,24 @@ jobs:
           sudo apt-get install -y \
             clang lld binaryen make python3
 
-      - name: Build PDF
-        run: make build/rdgeneric.pdf
+      - name: Check toolchain
+        run: |
+          clang --version
+          wasm-ld --version
+          wasm2js --version
+          python3 --version
+          make --version
+
+      - name: Build Minecraft PDF
+        run: |
+          make build/rdgeneric.pdf WASMLD="$(command -v wasm-ld)"
+
+      - name: Verify PDF
+        run: |
+          test -s build/rdgeneric.pdf
+          file build/rdgeneric.pdf
+          ls -lh build/rdgeneric.pdf
+          head -c 8 build/rdgeneric.pdf
 
       - name: Upload PDF
         uses: actions/upload-artifact@v4
@@ -27,3 +54,4 @@ jobs:
           name: Minecraft-PDF
           path: build/rdgeneric.pdf
           if-no-files-found: error
+          retention-days: 30
