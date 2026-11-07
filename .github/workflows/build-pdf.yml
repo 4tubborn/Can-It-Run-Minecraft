@@ -1,0 +1,29 @@
+
+name: Build Minecraft PDF
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang lld binaryen make python3
+
+      - name: Build PDF
+        run: make build/rdgeneric.pdf
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minecraft-PDF
+          path: build/rdgeneric.pdf
+          if-no-files-found: error
